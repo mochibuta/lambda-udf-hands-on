@@ -1,0 +1,39 @@
+{
+  "name": "lambda-udf-hands-on",
+  "private": true,
+  "workspaces": [
+    "@lambda/*"
+  ],
+  "version": "0.1.0",
+  "bin": {
+    "lambda-udf-hands-on": "bin/lambda-udf-hands-on.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@aws-cdk/aws-redshift-alpha": "^2.31.2-alpha.0",
+    "@types/jest": "^27.5.2",
+    "@types/node": "10.17.27",
+    "@types/prettier": "2.6.0",
+    "@typescript-eslint/eslint-plugin": "^5.30.6",
+    "aws-cdk": "2.31.2",
+    "aws-cdk-lib": "2.31.2",
+    "constructs": "^10.0.0",
+    "esbuild": "^0.14.49",
+    "eslint": "^8.19.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "jest": "^27.5.1",
+    "prettier": "^2.7.1",
+    "source-map-support": "^0.5.21",
+    "ts-jest": "^27.1.4",
+    "ts-node": "^10.8.1",
+    "typescript": "~3.9.7"
+  }
+}
