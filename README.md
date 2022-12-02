@@ -83,7 +83,7 @@ select dev.public.f_pokemon_name_translate(123);
 
 -- 5. 利用例
 with translated as (
-    select name as en, japanese_name as ja, json_parse(dev.public.f_pokemon_name_translate(pokedex_number)) as t, * from :orig_table_name
+    select name as en, japanese_name as ja, json_parse(dev.public.f_pokemon_name_translate(pokedex_number)) as t, * from dev.public.pokemon
 )
 select
     en,

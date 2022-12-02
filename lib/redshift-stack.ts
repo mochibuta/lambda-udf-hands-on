@@ -47,7 +47,9 @@ export class RedshiftStack extends Stack {
           statements: [
             new PolicyStatement({
               actions: ['lambda:InvokeFunction'],
-              resources: [`arn:aws:lambda:::function:${functionName}`],
+              resources: [
+                `arn:aws:lambda:${props?.env?.region}:${props?.env?.account}:function:${functionName}`,
+              ],
               effect: Effect.ALLOW,
             }),
           ],
