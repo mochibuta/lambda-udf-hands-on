@@ -2,8 +2,17 @@
 import 'source-map-support/register'
 import * as cdk from 'aws-cdk-lib'
 
-import { LambdaUdfHandsOnStack } from '../lib/lambda-udf-hands-on-stack'
+import { LambdaUdfStack } from '../lib/lambda-udf-stack'
+import { RedshiftStack } from '../lib/redshift-stack'
 
 const app = new cdk.App()
 
-new LambdaUdfHandsOnStack(app, 'LambdaUdfHandsOnStack', {})
+const env = {
+  account: process.env.CDK_DEFAULT_ACCOUNT,
+  region: process.env.CDK_DEFAULT_REGION,
+}
+
+const udfFunctionName = 'udf-pokemon-name-translate'
+
+new RedshiftStack(app, 'RedshiftStack', udfFunctionName, { env })
+new LambdaUdfStack(app, 'LambdaUdfStack', udfFunctionName, { env })
