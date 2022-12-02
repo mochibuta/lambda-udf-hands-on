@@ -1,6 +1,7 @@
 import * as path from 'path'
 
 import { Duration, Stack, StackProps } from 'aws-cdk-lib'
+import { Vpc } from 'aws-cdk-lib/aws-ec2'
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
@@ -15,6 +16,8 @@ export class LambdaUdfStack extends Stack {
   ) {
     super(scope, id, props)
 
+    const vpc = Vpc.fromLookup(this, 'DefaultVpc', { isDefault: true })
+
     new NodejsFunction(this, 'UdfPokemonNameTranslate', {
       functionName,
       entry: path.resolve('@lambda/udf-pokemon-name-translate/index.ts'),
@@ -25,6 +28,8 @@ export class LambdaUdfStack extends Stack {
       memorySize: 256,
       architecture: Architecture.ARM_64,
       bundling: { nodeModules: ['pokemon'] },
+      vpc,
+      allowPublicSubnet: true,
     })
   }
 }

@@ -4,7 +4,7 @@ FUNCTION_NAME=udf-pokemon-name-translate
 .PHONY: up upload-dataset describe-secret cleanup
 
 up:
-	npx cdk deploy
+	npx cdk deploy --all
 
 upload-dataset:
 	aws s3 cp ./dataset/pokemon.csv s3://${BUCKET_NAME}/pokemon.csv

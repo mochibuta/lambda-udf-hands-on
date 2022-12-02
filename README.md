@@ -1,34 +1,32 @@
-redshiftでlambdaUDFのお試し用  
-cdkでudf用lambda(node)とredshiftからのinvoke用Roleが作成されます
+redshift-serverlessを立ち上げ、lambdaUDFを試すことができます
 
-# 参考
-* [UDF のための Python 言語のサポート](https://docs.aws.amazon.com/ja_jp/redshift/latest/dg/udf-python-language-support.html)
-* [スカラー Lambda UDF の作成](https://docs.aws.amazon.com/ja_jp/redshift/latest/dg/udf-creating-a-lambda-sql-udf.html)
+作成するAWSリソース
+
+- RedshiftStack
+  - S3 Bucket (データ投入用) 
+  - Redshift Serverless一式
+    - Role
+    - Secret(adminユーザの認証情報)
+    - Security Group
+    - Namespace
+    - Workgroup
+- LambdaUdfStack
+  - lambda function (node 18)
+
+
 
 # 準備
-1. cdkスタックをデプロイする `make up`  
-   以下のCfnOutputを控えておく  
-   - `LambdaUdfHandsOnStack.OutputDataBucketName`  
-   - `LambdaUdfHandsOnStack.OutputInvokeRoleArn`
+1. cdkスタックをデプロイする `make up`
 2. [The Complete Pokemon Dataset](https://www.kaggle.com/datasets/rounakbanik/pokemon)から`pokemon.csv`をダウンロードして
 `./dataset`に保存する
 3. s3にcsvをアップロードしておく `make upload-dataset`
-4. redshiftにlambdaUDFを呼び出すためのRoleをアタッチする
-   - `REDSHIFT_CLUSTER=xxxx-xxxx make attach-role`
-
+4. adminユーザの接続情報を取得する`make describe-secret`
 
 # お試し用SQL
 ```sql
--- parameter example
--- :orig_table_name = pokemon
--- :bucket = s3://lambdaudfhandsonstack-databucketxxxxxxxxxxxxxxxxx
--- :invoke_role = arn:aws:iam::${AWSAccountId}:role/RedshiftUdfInvokeRole
--- :role = arn:aws:iam::${AWSAccountId}:role/RedshiftS3Role
-
-
 -- 1. データコピー用テーブル作成
-drop table if exists :orig_table_name;
-create temp table if not exists :orig_table_name(
+drop table if exists dev.public.pokemon;
+create temp table if not exists dev.public.pokemon(
     abilities         text,
     against_bug       float4,
     against_dark      float4,
@@ -73,24 +71,26 @@ create temp table if not exists :orig_table_name(
 );
 
 -- 2. s3からデータをコピー
-copy :orig_table_name from :bucket iam_role :role format as csv IGNOREHEADER 1;
+copy dev.public.pokemon from 's3://redshiftstack-databucketxxxxxxxxxxxxxxxxxxxxxx/pokemon.csv'
+    iam_role 'arn:aws:iam::xxxxxxxxxx:role/RedshiftServerlessRole'
+    format as csv IGNOREHEADER 1;
 
 -- 3. lambdaUDF作成
-create or replace external function f_pokemon_name_translate (pokedex_number int) returns varchar stable lambda 'udf-pokemon-name-translate' iam_role :invoke_role;
+create or replace external function dev.public.f_pokemon_name_translate (pokedex_number int) returns varchar stable lambda 'udf-pokemon-name-translate' iam_role 'arn:aws:iam::xxxxxxxxxx:role/RedshiftServerlessRole';
 
 -- 4. lambdaUDFテスト
-select f_pokemon_name_translate(123);
+select dev.public.f_pokemon_name_translate(123);
 
 -- 5. 利用例
 with translated as (
-    select name as en, japanese_name as ja, json_parse(f_pokemon_name_translate(pokedex_number)) as t, * from :orig_table_name
+    select name as en, japanese_name as ja, json_parse(dev.public.f_pokemon_name_translate(pokedex_number)) as t, * from :orig_table_name
 )
 select
     en,
     ja,
     t.de::text,
-        t.fr::text,
-        t.zhs::text
+    t.fr::text,
+    t.zhs::text
 from
     translated
 ;
@@ -119,7 +119,7 @@ with parsed as (
 )
 select
     value::text as v,
-        count(*)    as cnt
+    count(*)    as cnt
 from
     parsed as pd,
     unpivot pd.json as value at key
@@ -128,7 +128,11 @@ order by cnt desc;
 
 
 -- お掃除
-drop table if exists :orig_table_name;
-drop function f_pokemon_name_translate (pokedex_number int);
-drop function f_parse_abilities (abilities text);
+drop table if exists dev.public.pokemon;
+drop function dev.public.f_pokemon_name_translate (pokedex_number int);
+drop function dev.public.f_parse_abilities (abilities text);
 ```
+
+# 参考
+* [UDF のための Python 言語のサポート](https://docs.aws.amazon.com/ja_jp/redshift/latest/dg/udf-python-language-support.html)
+* [スカラー Lambda UDF の作成](https://docs.aws.amazon.com/ja_jp/redshift/latest/dg/udf-creating-a-lambda-sql-udf.html)
